@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Skin Disease Identification</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest/dist/teachablemachine-image.min.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; }
+        #label-container div { margin-top: 10px; }
+    </style>
+</head>
+<body>
+
+<h2>Teachable Machine Image Model: Skin Disease Identification</h2>
+<p>Select an image to analyze:</p>
+<input type="file" id="upload" accept="image/*" onchange="handleUpload(event)">
+<div id="label-container"></div>
+
+<script type="text/javascript">
+    const URL = "../my-model/";
+    let model, labelContainer, maxPredictions;
+
+    async function init() {
+        const modelURL = URL + "model.json";
+        const metadataURL = URL + "metadata.json";
+        model = await tmImage.load(modelURL, metadataURL);
+        maxPredictions = model.getTotalClasses();
+        labelContainer = document.getElementById("label-container");
+        for (let i = 0; i < maxPredictions; i++) {
+            labelContainer.appendChild(document.createElement("div"));
+        }
+    }
+
+    async function predict(imageElement) {
+        const prediction = await model.predict(imageElement);
+        for (let i = 0; i < maxPredictions; i++) {
+            const classPrediction = prediction[i].className + ": " + prediction[i].probability.toFixed(2);
+            labelContainer.childNodes[i].innerHTML = classPrediction;
+        }
+    }
+
+    function handleUpload(event) {
+        const input = event.target;
+        if ('files' in input && input.files.length > 0) {
+            const reader = new FileReader();
+            reader.onload = async function() {
+                const imageDataUrl = reader.result;
+                const imageElement = new Image();
+                imageElement.src = imageDataUrl;
+                await imageElement.decode(); // Ensure the image is fully loaded before prediction
+                predict(imageElement);
+            };
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+
+    window.onload = init;
+</script>
+
+</body>
+</html>
